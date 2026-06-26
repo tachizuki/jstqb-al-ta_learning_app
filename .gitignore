@@ -1,0 +1,10 @@
+# 公開しないもの（著作権物・社内ナレッジ）
+# ISTQB公式のサンプル試験/シラバス（PDF・txt）— 再配布不可
+_materials/
+# company運用の社内ノート（意思決定・学びメモ）
+secretary/
+
+# OS / エディタ
+.DS_Store
+Thumbs.db
+*.swp

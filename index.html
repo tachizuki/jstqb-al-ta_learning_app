@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>JSTQB AL テストアナリスト 学習</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#0f1216">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="JSTQB TA">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<style>
+:root{
+  --bg:#0f1216; --surface:#171b21; --surface2:#1e242b; --line:#2a313a;
+  --acc:#4da3ff; --acc-dim:rgba(77,163,255,0.12);
+  --text:#e8edf2; --sub:#93a0ad; --faint:#5b6672;
+  --good:#3ddc84; --good-dim:rgba(61,220,132,0.13);
+  --bad:#ff6b6b; --bad-dim:rgba(255,107,107,0.13);
+  --warn:#ffc857;
+  --sab:env(safe-area-inset-bottom,0px); --sat:env(safe-area-inset-top,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{background:#000;color:var(--text);font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',system-ui,sans-serif;line-height:1.6;}
+.phone{width:100%;max-width:540px;margin:0 auto;min-height:100vh;min-height:100dvh;background:var(--bg);position:relative;display:flex;flex-direction:column;}
+@media(min-width:541px){.phone{border-left:1px solid var(--line);border-right:1px solid var(--line);}}
+
+/* ヘッダー */
+.topbar{padding:calc(12px + var(--sat)) 18px 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(15,18,22,.92);backdrop-filter:blur(8px);z-index:20;}
+.topbar h1{font-size:15px;font-weight:800;flex:1;}
+.back{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--text);font-size:17px;cursor:pointer;display:none;align-items:center;justify-content:center;}
+.back.show{display:flex;}
+.topbar .meta{font-size:12px;color:var(--sub);font-variant-numeric:tabular-nums;}
+
+/* ページ */
+.viewport{flex:1;}
+.page{display:none;padding:16px 16px calc(28px + var(--sab));}
+.page.active{display:block;}
+
+/* カード/共通 */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px;}
+.muted{color:var(--sub);font-size:13px;}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:15px;border-radius:13px;border:none;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;}
+.btn.primary{background:var(--acc);color:#06121f;}
+.btn.ghost{background:var(--surface2);color:var(--text);border:1px solid var(--line);}
+.btn:disabled{opacity:.45;cursor:default;}
+.btn-row{display:flex;gap:10px;}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--acc-dim);color:var(--acc);}
+.tag.k{background:rgba(255,200,87,.13);color:var(--warn);}
+.tag.pt{background:var(--surface2);color:var(--sub);}
+
+/* ホーム */
+.hero{display:flex;align-items:center;gap:18px;}
+.ring{--p:0;width:96px;height:96px;border-radius:50%;flex-shrink:0;
+  background:conic-gradient(var(--acc) calc(var(--p)*1%), var(--surface2) 0);
+  display:flex;align-items:center;justify-content:center;}
+.ring .inner{width:74px;height:74px;border-radius:50%;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.ring .pct{font-size:23px;font-weight:900;font-variant-numeric:tabular-nums;}
+.ring .lbl{font-size:10px;color:var(--sub);}
+.hero-stats{flex:1;display:flex;flex-direction:column;gap:6px;}
+.hero-stats .row{display:flex;justify-content:space-between;font-size:13px;}
+.hero-stats .row b{font-variant-numeric:tabular-nums;}
+.section-title{font-size:13px;font-weight:800;color:var(--sub);margin:18px 4px 8px;letter-spacing:.04em;}
+.seg{display:flex;gap:5px;background:var(--surface2);border:1px solid var(--line);border-radius:11px;padding:3px;margin-bottom:14px;}
+.seg button{flex:1;padding:8px 6px;border:none;background:transparent;color:var(--sub);font-size:12.5px;font-weight:800;border-radius:8px;cursor:pointer;font-family:inherit;transition:.12s;}
+.seg button.on{background:var(--acc);color:#06121f;}
+
+/* 章リスト */
+.chapter{display:flex;align-items:center;gap:12px;padding:14px;background:var(--surface);border:1px solid var(--line);border-radius:13px;margin-bottom:10px;cursor:pointer;transition:background .15s;}
+.chapter:active{background:var(--surface2);}
+.chapter.is-disabled{opacity:.5;cursor:default;}
+.chapter .num{width:34px;height:34px;border-radius:9px;background:var(--acc-dim);color:var(--acc);font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.chapter .body{flex:1;min-width:0;}
+.chapter .body .t{font-size:14px;font-weight:700;}
+.chapter .body .s{font-size:11px;color:var(--faint);margin-top:2px;}
+.bar{height:6px;border-radius:3px;background:var(--surface2);overflow:hidden;margin-top:7px;}
+.bar > i{display:block;height:100%;background:var(--good);border-radius:3px;}
+.chapter .pctnum{font-size:12px;color:var(--sub);font-variant-numeric:tabular-nums;flex-shrink:0;}
+
+/* クイズ */
+.qprogress{height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-bottom:14px;}
+.qprogress > i{display:block;height:100%;background:var(--acc);transition:width .3s;}
+.qhead{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:10px;}
+.scenario{background:var(--surface2);border:1px solid var(--line);border-radius:11px;padding:13px;font-size:13.5px;color:var(--text);white-space:pre-wrap;margin-bottom:12px;}
+.qtext{font-size:16px;font-weight:700;margin-bottom:14px;line-height:1.65;}
+.opt{display:flex;gap:11px;align-items:flex-start;padding:13px;border:1.5px solid var(--line);border-radius:12px;margin-bottom:10px;cursor:pointer;background:var(--surface);transition:.12s;}
+.opt .mark{width:24px;height:24px;border-radius:50%;border:2px solid var(--faint);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#fff;margin-top:1px;}
+.opt.box .mark{border-radius:7px;}
+.opt .otext{flex:1;font-size:14px;}
+.opt.sel{border-color:var(--acc);background:var(--acc-dim);}
+.opt.sel .mark{border-color:var(--acc);background:var(--acc);color:#06121f;}
+.opt.correct{border-color:var(--good);background:var(--good-dim);}
+.opt.correct .mark{border-color:var(--good);background:var(--good);}
+.opt.wrong{border-color:var(--bad);background:var(--bad-dim);}
+.opt.wrong .mark{border-color:var(--bad);background:var(--bad);}
+.opt.locked{cursor:default;}
+.selhint{font-size:12px;color:var(--sub);margin-bottom:12px;}
+
+/* 解説 */
+.explain{border-radius:12px;padding:14px;margin:14px 0;border:1px solid var(--line);}
+.explain.ok{background:var(--good-dim);border-color:rgba(61,220,132,.4);}
+.explain.ng{background:var(--bad-dim);border-color:rgba(255,107,107,.4);}
+.explain .verdict{font-size:15px;font-weight:900;margin-bottom:8px;display:flex;align-items:center;gap:7px;}
+.explain.ok .verdict{color:var(--good);}
+.explain.ng .verdict{color:var(--bad);}
+.explain .body{font-size:13.5px;color:var(--text);}
+.explain .ref{font-size:12px;color:var(--sub);margin-top:9px;padding-top:9px;border-top:1px dashed var(--line);}
+
+/* 結果 */
+.result-score{text-align:center;padding:22px 0;}
+.result-score .big{font-size:46px;font-weight:900;font-variant-numeric:tabular-nums;}
+.result-score .big small{font-size:20px;color:var(--sub);}
+.result-score .sub{color:var(--sub);font-size:13px;margin-top:4px;}
+.rev-item{display:flex;gap:10px;align-items:center;padding:11px;border:1px solid var(--line);border-radius:11px;margin-bottom:8px;cursor:pointer;}
+.rev-item .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.rev-item .dot.ok{background:var(--good);}
+.rev-item .dot.ng{background:var(--bad);}
+.rev-item .t{flex:1;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* 要点 */
+.acc-item{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden;}
+.acc-head{display:flex;align-items:center;gap:11px;padding:14px;cursor:pointer;background:var(--surface);}
+.acc-head .num{width:30px;height:30px;border-radius:8px;background:var(--acc-dim);color:var(--acc);font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;}
+.acc-head .t{flex:1;font-size:13.5px;font-weight:700;}
+.acc-head .chev{color:var(--sub);transition:.2s;}
+.acc-item.open .chev{transform:rotate(90deg);}
+.acc-body{display:none;padding:4px 16px 16px;}
+.acc-item.open .acc-body{display:block;}
+.acc-body li{font-size:13px;color:var(--sub);margin:7px 0 7px 2px;list-style:none;padding-left:14px;position:relative;}
+.acc-body li::before{content:'';position:absolute;left:0;top:9px;width:5px;height:5px;border-radius:50%;background:var(--acc);}
+.empty{text-align:center;color:var(--faint);padding:40px 20px;font-size:13px;}
+.foot-note{font-size:11px;color:var(--faint);text-align:center;margin-top:20px;line-height:1.7;}
+.foot-note a{color:var(--sub);}
+</style>
+</head>
+<body>
+<div class="phone">
+  <header class="topbar">
+    <button class="back" id="backBtn" onclick="goBack()">‹</button>
+    <h1 id="title">JSTQB テストアナリスト</h1>
+    <span class="meta" id="topMeta"></span>
+  </header>
+  <div class="viewport">
+
+    <!-- ホーム -->
+    <section class="page active" id="page-home"></section>
+
+    <!-- 章選択 -->
+    <section class="page" id="page-chapters"></section>
+
+    <!-- クイズ -->
+    <section class="page" id="page-quiz"></section>
+
+    <!-- 結果 -->
+    <section class="page" id="page-result"></section>
+
+    <!-- 要点まとめ -->
+    <section class="page" id="page-summary"></section>
+
+    <!-- 技法別ドリル -->
+    <section class="page" id="page-drill"></section>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script>
+/* ===== ストレージ ===== */
+const KEY='jstqb_ta_v1';
+let store=load();
+function load(){
+  try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.history){if(!Array.isArray(s.log))s.log=[];return s;}}catch(e){}
+  return {history:{},wrong:[],log:[]};
+}
+function save(){localStorage.setItem(KEY,JSON.stringify(store));}
+
+/* ===== 画面遷移 ===== */
+let stack=['home'];
+function show(id,opts={}){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelector('.viewport').scrollTo(0,0);
+  window.scrollTo(0,0);
+  document.getElementById('backBtn').classList.toggle('show',id!=='home');
+  if(!opts.noPush) stack.push(id);
+}
+function goBack(){
+  if(session && stack[stack.length-1]==='quiz'){
+    if(!confirm('演習を中断してホームに戻りますか？')) return;
+    session=null;
+  }
+  stack.pop();
+  const prev=stack[stack.length-1]||'home';
+  show(prev,{noPush:true});
+  if(prev==='home') renderHome();
+  if(prev==='chapters') renderChapters();
+  if(prev==='drill') renderDrill();
+}
+function setTitle(t,meta=''){document.getElementById('title').textContent=t;document.getElementById('topMeta').textContent=meta;}
+
+/* ===== 集計 ===== */
+function answeredCount(){return Object.keys(store.history).length;}
+function totalQ(){return QUESTIONS.length;}
+function chapterStats(n){
+  const qs=QUESTIONS.filter(q=>q.chapter===n);
+  let done=0,correct=0;
+  qs.forEach(q=>{const h=store.history[q.id];if(h){done++;if(h.lastResult)correct++;}});
+  return {total:qs.length,done,correct,pct:qs.length?Math.round(done/qs.length*100):0};
+}
+function overallPct(){
+  const t=totalQ();return t?Math.round(answeredCount()/t*100):0;
+}
+function overallCorrect(){
+  let c=0;Object.values(store.history).forEach(h=>{if(h.lastResult)c++;});return c;
+}
+const RECENT_N=50;
+function recentStats(n){
+  const log=Array.isArray(store.log)?store.log:[];
+  const slice=log.slice(-n);
+  const correct=slice.filter(e=>e.ok).length;
+  return {count:slice.length,correct,pct:slice.length?Math.round(correct/slice.length*100):0};
+}
+
+/* ===== ホーム ===== */
+let homeMode='all';
+function setHomeMode(m){homeMode=m;renderHome();}
+function renderHome(){
+  setTitle('JSTQB テストアナリスト','');
+  const ans=answeredCount(), tot=totalQ();
+  const wrong=store.wrong.length;
+  let ringP,ringPct,ringLbl,rows;
+  if(homeMode==='recent'){
+    const r=recentStats(RECENT_N);
+    ringP=r.pct; ringPct=r.count?r.pct:'–'; ringLbl='直近正答率';
+    rows=`
+      <div class="row"><span class="muted">回答数（延べ）</span><b>${r.count} / ${RECENT_N}</b></div>
+      <div class="row"><span class="muted">正答</span><b style="color:var(--good)">${r.correct}問</b></div>
+      <div class="row"><span class="muted">復習対象</span><b style="color:${wrong?'var(--bad)':'var(--sub)'}">${wrong}問</b></div>`;
+  }else{
+    const pct=overallPct(), acc=ans?Math.round(overallCorrect()/ans*100):0;
+    ringP=pct; ringPct=pct; ringLbl='学習済み';
+    rows=`
+      <div class="row"><span class="muted">解いた問題</span><b>${ans} / ${tot}</b></div>
+      <div class="row"><span class="muted">正答率</span><b>${acc}%</b></div>
+      <div class="row"><span class="muted">復習対象</span><b style="color:${wrong?'var(--bad)':'var(--sub)'}">${wrong}問</b></div>`;
+  }
+  const el=document.getElementById('page-home');
+  el.innerHTML=`
+    <div class="card">
+      <div class="seg">
+        <button class="${homeMode==='all'?'on':''}" onclick="setHomeMode('all')">通算</button>
+        <button class="${homeMode==='recent'?'on':''}" onclick="setHomeMode('recent')">直近${RECENT_N}問</button>
+      </div>
+      <div class="hero">
+        <div class="ring" style="--p:${ringP}">
+          <div class="inner"><div class="pct">${ringPct}<small style="font-size:12px">%</small></div><div class="lbl">${ringLbl}</div></div>
+        </div>
+        <div class="hero-stats">
+          ${rows}
+        </div>
+      </div>
+    </div>
+    <div class="section-title" style="margin:6px 4px 8px">📝 模擬試験</div>
+    <div class="btn-row" style="margin-bottom:10px">
+      <button class="btn ghost" onclick="startQuiz('exam',20)">20問</button>
+      <button class="btn ghost" onclick="startQuiz('exam',50)">50問</button>
+      <button class="btn primary" onclick="startQuiz('exam')">全${tot}問</button>
+    </div>
+    <div class="btn-row" style="margin-bottom:10px">
+      <button class="btn ghost" onclick="renderChapters();show('chapters')">📚 章別演習</button>
+      <button class="btn ghost" onclick="startReview()" ${wrong?'':'disabled'}>🔁 復習 ${wrong?'('+wrong+')':''}</button>
+    </div>
+    <div class="btn-row" style="margin-bottom:6px">
+      <button class="btn ghost" onclick="renderDrill();show('drill')">🎯 技法別ドリル</button>
+      <button class="btn ghost" onclick="renderSummary();show('summary')">📖 要点まとめ</button>
+    </div>
+    <div class="section-title">章別の進捗</div>
+    ${CHAPTERS.map(c=>{const st=chapterStats(c.n);return `
+      <div class="chapter" onclick="startQuiz('chapter',${c.n})">
+        <div class="num">${c.n}</div>
+        <div class="body">
+          <div class="t">${c.title}</div>
+          <div class="bar"><i style="width:${st.pct}%"></i></div>
+        </div>
+        <div class="pctnum">${st.done}/${st.total}</div>
+      </div>`}).join('')}
+    <div class="foot-note">
+      JSTQB AL テストアナリスト シラバス V3.1.1 準拠の個人学習用アプリ。<br>
+      問題はISTQBサンプル試験を題材に日本語で作成（逐語転載なし）。<br>
+      <a onclick="if(confirm('学習履歴をすべて消去しますか？')){store={history:{},wrong:[],log:[]};save();renderHome();}" style="cursor:pointer">学習履歴をリセット</a>
+    </div>`;
+}
+
+/* ===== 章選択 ===== */
+function renderChapters(){
+  setTitle('章別演習');
+  const el=document.getElementById('page-chapters');
+  el.innerHTML=CHAPTERS.map(c=>{const st=chapterStats(c.n);return `
+    <div class="chapter" onclick="startQuiz('chapter',${c.n})">
+      <div class="num">${c.n}</div>
+      <div class="body">
+        <div class="t">${c.title}</div>
+        <div class="s">${c.total||st.total}問 ・ 推奨学習 ${c.min}分</div>
+        <div class="bar"><i style="width:${st.pct}%"></i></div>
+      </div>
+      <div class="pctnum">${st.correct}/${st.total}</div>
+    </div>`}).join('')
+    +`<div class="foot-note">各章をタップすると演習を開始します。</div>`;
+}
+
+/* ===== クイズ ===== */
+let session=null;
+const LETTERS='abcdefghij';
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+function startQuiz(mode,arg){
+  let qs;
+  if(mode==='chapter'){qs=shuffle(QUESTIONS.filter(q=>q.chapter===arg));}
+  else if(mode==='technique'){qs=shuffle(QUESTIONS.filter(q=>q.technique===arg));}
+  else if(mode==='techreview'){qs=shuffle(QUESTIONS.filter(q=>q.technique===arg&&store.wrong.includes(q.id)));}
+  else{qs=shuffle(QUESTIONS);if(mode==='exam'&&arg)qs=qs.slice(0,arg);}
+  if(!qs.length){alert(mode==='techreview'?'この技法の復習対象はありません':'問題がありません');return;}
+  const isTech=(mode==='technique'||mode==='techreview');
+  session={mode,chapter:mode==='chapter'?arg:undefined,technique:isTech?arg:undefined,qs,idx:0,selected:[],locked:false,results:[]};
+  if(stack[stack.length-1]!=='quiz') stack.push('quiz');
+  show('quiz',{noPush:true});
+  renderQuestion();
+}
+function startReview(){
+  const qs=shuffle(QUESTIONS.filter(q=>store.wrong.includes(q.id)));
+  if(!qs.length){alert('復習対象の問題はありません');return;}
+  session={mode:'review',qs,idx:0,selected:[],locked:false,results:[]};
+  stack.push('quiz');show('quiz',{noPush:true});renderQuestion();
+}
+
+function modeLabel(m){return {chapter:'章別演習',exam:'模擬試験',review:'復習',technique:'技法別ドリル',techreview:'技法別復習'}[m]||'演習';}
+
+function renderQuestion(){
+  const s=session,q=s.qs[s.idx];
+  s.selected=[];s.locked=false;
+  s.opts=shuffle(q.options); // 選択肢の表示順をランダム化（暗記防止）
+  setTitle(modeLabel(s.mode),`${s.idx+1} / ${s.qs.length}`);
+  const multi=q.type==='multiple';
+  const need=multi?(q.correct.length):1;
+  const el=document.getElementById('page-quiz');
+  el.innerHTML=`
+    <div class="qprogress"><i style="width:${(s.idx)/s.qs.length*100}%"></i></div>
+    <div class="qhead">
+      <span class="tag">第${q.chapter}章</span>
+      <span class="tag k">${q.k}</span>
+      <span class="tag pt">${q.points}点</span>
+      <span class="tag pt">${q.lo}</span>
+    </div>
+    ${q.scenario?`<div class="scenario">${esc(q.scenario)}</div>`:''}
+    <div class="qtext">${esc(q.question)}</div>
+    <div class="selhint">${multi?`${need}つ選択してください`:'1つ選択してください'}</div>
+    <div id="opts">
+      ${s.opts.map((o,i)=>`
+        <div class="opt ${multi?'box':''}" data-id="${o.id}" onclick="toggleOpt('${o.id}')">
+          <div class="mark"></div><div class="otext"><b>${LETTERS[i]})</b> ${esc(o.text)}</div>
+        </div>`).join('')}
+    </div>
+    <div id="explainSlot"></div>
+    <button class="btn primary" id="actBtn" onclick="onAct()" disabled>解答する</button>`;
+}
+function toggleOpt(id){
+  const s=session,q=s.qs[s.idx];if(s.locked)return;
+  const multi=q.type==='multiple';
+  if(multi){
+    const i=s.selected.indexOf(id);
+    if(i>=0)s.selected.splice(i,1);else s.selected.push(id);
+  }else{
+    s.selected=[id];
+  }
+  document.querySelectorAll('#opts .opt').forEach(o=>{
+    o.classList.toggle('sel',s.selected.includes(o.dataset.id));
+    o.querySelector('.mark').textContent=s.selected.includes(o.dataset.id)?(multi?'✓':''):'';
+  });
+  const need=multi?q.correct.length:1;
+  document.getElementById('actBtn').disabled=s.selected.length===0;
+}
+function onAct(){
+  const s=session;
+  if(!s.locked){submitAnswer();}
+  else{nextQuestion();}
+}
+function arrEq(a,b){if(a.length!==b.length)return false;const x=[...a].sort(),y=[...b].sort();return x.every((v,i)=>v===y[i]);}
+
+function submitAnswer(){
+  const s=session,q=s.qs[s.idx];
+  s.locked=true;
+  const ok=arrEq(s.selected,q.correct);
+  s.results.push({id:q.id,ok});
+  // 履歴更新
+  const h=store.history[q.id]||{att:0,correct:0};
+  h.att++;if(ok)h.correct++;h.lastResult=ok;h.lastDate=Date.now();
+  store.history[q.id]=h;
+  const wi=store.wrong.indexOf(q.id);
+  if(ok){if(wi>=0)store.wrong.splice(wi,1);}
+  else{if(wi<0)store.wrong.push(q.id);}
+  // 回答イベントを時系列ログに記録（直近◯問の集計用、上限500件）
+  if(!Array.isArray(store.log))store.log=[];
+  store.log.push({ok,ts:Date.now()});
+  if(store.log.length>500)store.log=store.log.slice(-500);
+  save();
+  // 選択肢の色付け
+  document.querySelectorAll('#opts .opt').forEach(o=>{
+    const oid=o.dataset.id;o.classList.add('locked');o.classList.remove('sel');
+    const m=o.querySelector('.mark');
+    if(q.correct.includes(oid)){o.classList.add('correct');m.textContent='✓';}
+    else if(s.selected.includes(oid)){o.classList.add('wrong');m.textContent='✕';}
+    else{m.textContent='';}
+  });
+  const ch=CHAPTERS.find(c=>c.n===q.chapter);
+  const correctDisp=s.opts.map((o,i)=>q.correct.includes(o.id)?LETTERS[i]:null).filter(Boolean);
+  document.getElementById('explainSlot').innerHTML=`
+    <div class="explain ${ok?'ok':'ng'}">
+      <div class="verdict">${ok?'◯ 正解':'✕ 不正解'} <span class="muted" style="font-weight:600;color:inherit">（正解: ${correctDisp.join(', ')}）</span></div>
+      <div class="body">${esc(q.explanation)}</div>
+      <div class="ref">📘 第${q.chapter}章 ${ch?ch.title:''} ／ ${q.lo}（${q.k}）</div>
+    </div>`;
+  const btn=document.getElementById('actBtn');
+  btn.disabled=false;
+  btn.textContent=(s.idx<s.qs.length-1)?'次の問題へ':'結果を見る';
+  document.querySelector('.qprogress > i').style.width=`${(s.idx+1)/s.qs.length*100}%`;
+}
+function nextQuestion(){
+  const s=session;
+  if(s.idx<s.qs.length-1){s.idx++;renderQuestion();}
+  else{finishQuiz();}
+}
+
+/* ===== 結果 ===== */
+function finishQuiz(){
+  const s=session;
+  const total=s.qs.length;
+  const correct=s.results.filter(r=>r.ok).length;
+  const ptsTotal=s.qs.reduce((a,q)=>a+q.points,0);
+  const ptsGot=s.qs.reduce((a,q,i)=>a+(s.results[i].ok?q.points:0),0);
+  const scorePct=Math.round(ptsGot/ptsTotal*100);
+  const pass=scorePct>=65;
+  setTitle(modeLabel(s.mode)+' 結果');
+  const el=document.getElementById('page-result');
+  el.innerHTML=`
+    <div class="card">
+      <div class="result-score">
+        <div class="big" style="color:${pass?'var(--good)':'var(--warn)'}">${scorePct}<small>%</small></div>
+        <div class="sub">配点ベース ${ptsGot} / ${ptsTotal} 点　${pass?'合格ライン(65%)到達 🎉':'合格ラインまであと少し'}</div>
+        <div class="sub">正答 ${correct} / ${total} 問</div>
+      </div>
+    </div>
+    <div class="section-title">問題ごとの結果（タップで解説）</div>
+    ${s.qs.map((q,i)=>`
+      <div class="rev-item" onclick="reviewOne(${i})">
+        <div class="dot ${s.results[i].ok?'ok':'ng'}"></div>
+        <div class="t">${i+1}. ${esc(q.question)}</div>
+        <span class="muted">${q.points}点</span>
+      </div>`).join('')}
+    <button class="btn primary" onclick="exitToHome()" style="margin-top:14px">ホームに戻る</button>`;
+  // スタック整理：quizを抜けてresultへ
+  if(stack[stack.length-1]==='quiz')stack.pop();
+  stack.push('result');
+  show('result',{noPush:true});
+}
+let reviewReturn=null;
+function reviewOne(i){
+  // 結果画面から1問の解説を再表示（読み取り専用）
+  const s=session,q=s.qs[i];
+  reviewReturn=true;
+  setTitle('解説',`${i+1} / ${s.qs.length}`);
+  const ch=CHAPTERS.find(c=>c.n===q.chapter);
+  const ok=s.results[i].ok;
+  const el=document.getElementById('page-quiz');
+  el.innerHTML=`
+    <div class="qhead">
+      <span class="tag">第${q.chapter}章</span><span class="tag k">${q.k}</span>
+      <span class="tag pt">${q.points}点</span><span class="tag pt">${q.lo}</span>
+    </div>
+    ${q.scenario?`<div class="scenario">${esc(q.scenario)}</div>`:''}
+    <div class="qtext">${esc(q.question)}</div>
+    <div id="opts">
+      ${q.options.map((o,i)=>{
+        const isC=q.correct.includes(o.id);
+        return `<div class="opt locked ${isC?'correct':''}">
+          <div class="mark">${isC?'✓':''}</div><div class="otext"><b>${LETTERS[i]})</b> ${esc(o.text)}</div></div>`;
+      }).join('')}
+    </div>
+    <div class="explain ${ok?'ok':'ng'}">
+      <div class="verdict">${ok?'◯ 正解した問題':'✕ 不正解だった問題'} <span class="muted" style="font-weight:600;color:inherit">（正解: ${q.options.map((o,i)=>q.correct.includes(o.id)?LETTERS[i]:null).filter(Boolean).join(', ')}）</span></div>
+      <div class="body">${esc(q.explanation)}</div>
+      <div class="ref">📘 第${q.chapter}章 ${ch?ch.title:''} ／ ${q.lo}（${q.k}）</div>
+    </div>
+    <button class="btn ghost" onclick="show('result',{noPush:true});restoreResultTitle()">結果一覧に戻る</button>`;
+  stack.push('quiz');
+  show('quiz',{noPush:true});
+}
+function restoreResultTitle(){if(stack[stack.length-1]==='quiz')stack.pop();setTitle(modeLabel(session.mode)+' 結果');}
+function exitToHome(){session=null;stack=['home'];show('home',{noPush:true});renderHome();}
+
+/* ===== 要点まとめ ===== */
+function renderSummary(){
+  setTitle('要点まとめ');
+  const el=document.getElementById('page-summary');
+  el.innerHTML=CHAPTERS.map((c,i)=>`
+    <div class="acc-item ${i===0?'open':''}">
+      <div class="acc-head" onclick="this.parentNode.classList.toggle('open')">
+        <div class="num">${c.n}</div><div class="t">${c.title}</div>
+        <span class="muted">${c.min}分</span><span class="chev">›</span>
+      </div>
+      <div class="acc-body"><ul>${c.summary.map(s=>`<li>${esc(s)}</li>`).join('')}</ul></div>
+    </div>`).join('')
+    +`<div class="foot-note">出典: JSTQB AL テストアナリスト シラバス V3.1.1 を要約。学習目標(LO)の知識レベルは K2=理解 / K3=適用 / K4=分析。</div>`;
+}
+
+/* ===== 技法別ドリル（第3章） ===== */
+let drillMode='all';
+function setDrillMode(m){drillMode=m;renderDrill();}
+function renderDrill(){
+  setTitle('技法別ドリル','第3章');
+  const el=document.getElementById('page-drill');
+  const rows=TECHNIQUES.map(t=>{
+    const qs=QUESTIONS.filter(q=>q.technique===t.id);
+    const correct=qs.filter(q=>{const h=store.history[q.id];return h&&h.lastResult;}).length;
+    const wrong=qs.filter(q=>store.wrong.includes(q.id)).length;
+    if(drillMode==='wrong'){
+      const active=wrong>0;
+      return `<div class="chapter${active?'':' is-disabled'}" ${active?`onclick="startQuiz('techreview','${t.id}')"`:''}>
+        <div class="num">3</div>
+        <div class="body">
+          <div class="t">${t.name}</div>
+          <div class="s">${active?'タップで間違いのみ復習':'復習対象なし 👍'}</div>
+        </div>
+        <div class="pctnum" style="color:${wrong?'var(--bad)':'var(--sub)'}">${wrong}問</div>
+      </div>`;
+    }
+    const done=qs.filter(q=>store.history[q.id]).length;
+    const pct=qs.length?Math.round(done/qs.length*100):0;
+    return `<div class="chapter" onclick="startQuiz('technique','${t.id}')">
+      <div class="num">3</div>
+      <div class="body">
+        <div class="t">${t.name}</div>
+        <div class="s">${qs.length}問</div>
+        <div class="bar"><i style="width:${pct}%"></i></div>
+      </div>
+      <div class="pctnum">${correct}/${qs.length}</div>
+    </div>`;
+  }).join('');
+  el.innerHTML=`
+    <div class="seg">
+      <button class="${drillMode==='all'?'on':''}" onclick="setDrillMode('all')">全問演習</button>
+      <button class="${drillMode==='wrong'?'on':''}" onclick="setDrillMode('wrong')">間違いのみ復習</button>
+    </div>
+    ${rows}
+    <div class="foot-note">${drillMode==='wrong'?'各技法で間違えた（未正解の）問題だけを復習します。正解すると復習対象から外れます。':'第3章の技法ごとに絞って演習できます。計算問題の反復練習に。'}</div>`;
+}
+
+/* ===== util ===== */
+function esc(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+
+renderHome();
+</script>
+<script>
+/* PWA: Service Worker 登録（HTTPSまたはlocalhostでのみ有効） */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{navigator.serviceWorker.register('./sw.js').catch(()=>{});});
+}
+</script>
+</body>
+</html>
