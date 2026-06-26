@@ -418,7 +418,7 @@ function submitAnswer(){
   document.getElementById('explainSlot').innerHTML=`
     <div class="explain ${ok?'ok':'ng'}">
       <div class="verdict">${ok?'◯ 正解':'✕ 不正解'} <span class="muted" style="font-weight:600;color:inherit">（正解: ${correctDisp.join(', ')}）</span></div>
-      <div class="body">${esc(q.explanation)}</div>
+      <div class="body">${esc(remapChoices(q.explanation,s.opts))}</div>
       <div class="ref">📘 第${q.chapter}章 ${ch?ch.title:''} ／ ${q.lo}（${q.k}）</div>
     </div>`;
   const btn=document.getElementById('actBtn');
@@ -558,6 +558,12 @@ function renderDrill(){
 
 /* ===== util ===== */
 function esc(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+/* 解説本文中の選択肢参照（元ID a〜e）を、シャッフル後の表示ラベルに変換する。
+   英字に挟まれない単独の a〜e のみを選択肢参照とみなす（(a) / (cは… / a・b・d 等に対応）。 */
+function remapChoices(text,opts){
+  const map={};opts.forEach((o,i)=>{map[o.id]=LETTERS[i];});
+  return String(text).replace(/([^a-zA-Z]|^)([a-e])(?![a-zA-Z])/g,(m,b,L)=>b+(map[L]||L));
+}
 
 renderHome();
 </script>
